@@ -1,0 +1,20 @@
+{
+	"folders": [
+		{
+			"path": "../../webview/KeplerProject"
+		},
+		{
+			"name": "KeplerProject",
+			"path": "."
+		}
+	],
+	"settings": {
+		"C_Cpp.default.includePath": [
+			"${workspaceFolder}/**",
+			"/Users/yeomjiseong/kepler/sdk/0.21.5245/workspace/App/NativeRuntime/build/private/sysroot-armv7/usr/include/**",
+			"/Users/yeomjiseong/kepler/sdk/0.21.5245/workspace/App/NativeRuntime/build/private/sysroot-aarch64/usr/include/**",
+			"/Users/yeomjiseong/kepler/sdk/0.21.5245/workspace/App/NativeRuntime/build/private/sysroot-x86_64/usr/include/**"
+		],
+		"C_Cpp.default.compilerPath": "/Users/yeomjiseong/kepler/sdk/0.21.5245/workspace/App/NativeRuntime/build/private/toolchain/armv7/mac/bin/clang"
+	}
+}
