@@ -49,35 +49,6 @@ KeplerProject/
 - Amazon Kepler CLI
 - Vega OS development environment
 
-### Install Dependencies
-
-```bash
-npm install
-```
-
-### Development Mode
-
-```bash
-npm start
-```
-
-### Build
-
-**Debug Build:**
-```bash
-npm run build:debug
-```
-
-**Release Build:**
-```bash
-npm run build:release
-```
-
-**Full Build (Lint + Test + Build):**
-```bash
-npm run release
-```
-
 ## Remote Control Key Mapping
 
 | Key | Key Code | Function |
@@ -91,14 +62,6 @@ npm run release
 | Rewind | 227 | Rewind 30 seconds |
 | Fast Forward | 228 | Fast forward 30 seconds |
 
-## Development Scripts
-
-- `npm run clean`: Remove build files and node_modules
-- `npm test`: Run Jest tests
-- `npm run test:snapshot`: Update snapshot tests
-- `npm run lint`: Run ESLint
-- `npm run lint:fix`: Auto-fix with ESLint
-
 ## Main Dependencies
 
 ### Runtime Dependencies
@@ -107,15 +70,6 @@ npm run release
 - `@amazon-devices/kepler-media-controls`: Media control API
 - `@amazon-devices/kepler-media-types`: Media type definitions
 
-### Dev Dependencies
-- `@amazon-devices/kepler-cli-platform`: Kepler CLI tools
-- `@testing-library/react-native`: Testing library
-- TypeScript, ESLint, Jest, etc.
-
-## License
-
-Private
-
 ## Target Platform
 
-- Vega OS TV (armv7, aarch64, x86_64)
+- Vega OS TV
