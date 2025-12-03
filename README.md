@@ -37,6 +37,7 @@ KeplerProject/
 │   └── App.spec.tsx        # Test files
 ├── app.json                # App metadata
 ├── package.json            # Project dependencies
+├── manifest.toml           # App Configuration
 ├── tsconfig.json           # TypeScript configuration
 └── jest.config.json        # Test configuration
 ```
