@@ -49,35 +49,6 @@ KeplerProject/
 - Amazon Kepler CLI
 - Vega OS 개발 환경
 
-### 의존성 설치
-
-```bash
-npm install
-```
-
-### 개발 모드 실행
-
-```bash
-npm start
-```
-
-### 빌드
-
-**Debug 빌드:**
-```bash
-npm run build:debug
-```
-
-**Release 빌드:**
-```bash
-npm run build:release
-```
-
-**전체 빌드 (Lint + Test + Build):**
-```bash
-npm run release
-```
-
 ## 리모컨 키 매핑
 
 | 키 | 키코드 | 기능 |
@@ -91,14 +62,6 @@ npm run release
 | Rewind | 227 | 30초 되감기 |
 | Fast Forward | 228 | 30초 빨리감기 |
 
-## 개발 스크립트
-
-- `npm run clean`: 빌드 파일 및 node_modules 삭제
-- `npm test`: Jest 테스트 실행
-- `npm run test:snapshot`: 스냅샷 테스트 업데이트
-- `npm run lint`: ESLint 실행
-- `npm run lint:fix`: ESLint 자동 수정
-
 ## 주요 의존성
 
 ### Runtime Dependencies
@@ -106,16 +69,5 @@ npm run release
 - `@amazon-devices/webview`: Vega OS WebView 컴포넌트
 - `@amazon-devices/kepler-media-controls`: 미디어 제어 API
 - `@amazon-devices/kepler-media-types`: 미디어 타입 정의
-
-### Dev Dependencies
-- `@amazon-devices/kepler-cli-platform`: Kepler CLI 도구
-- `@testing-library/react-native`: 테스팅 라이브러리
-- TypeScript, ESLint, Jest 등
-
-## 라이선스
-
-Private
-
 ## 타겟 플랫폼
-
-- Vega OS TV (armv7, aarch64, x86_64)
+- Vega OS TV
