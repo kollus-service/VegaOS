@@ -1,86 +1,86 @@
-// Vega OS WebView와 Kollus Multi-DRM 통합 샘플 애플리케이션
+// Vega OS WebView with Kollus Multi-DRM integration sample application
 import { WebView } from "@amazon-devices/webview";
 import { useEffect, useRef, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { IComponentInstance, useComponentInstance } from "@amazon-devices/react-native-kepler";
 
 /**
- * App 컴포넌트
+ * App Component
  *
- * Vega OS에서 실행되는 메인 애플리케이션 컴포넌트입니다.
- * WebView를 사용하여 DRM 보호 콘텐츠를 재생하고,
- * TV 리모컨을 통한 미디어 제어 기능을 제공합니다.
+ * Main application component running on Vega OS.
+ * Plays DRM-protected content using WebView and
+ * provides media control functionality via TV remote.
  */
 export const App = () => {
-  // WebView 참조를 저장하는 ref (JavaScript 주입에 사용)
+  // Ref to store WebView reference (used for JavaScript injection)
   const webRef = useRef<any>(null);
 
-  // Kepler 컴포넌트 인스턴스 (Vega OS 플랫폼과 상호작용)
+  // Kepler component instance (interacts with Vega OS platform)
   const componentInstance: IComponentInstance = useComponentInstance();
 
   /**
-   * TV 리모컨 제어 설정 함수
+   * TV Remote Control Setup Function
    *
-   * WebView 내부에 JavaScript 코드를 주입하여 Vega OS 리모컨의
-   * 키 이벤트를 감지하고 미디어 플레이어를 제어합니다.
+   * Injects JavaScript code into WebView to detect Vega OS remote's
+   * key events and control the media player.
    */
   const setupRemoteControl = () => {
     if (webRef.current) {
-      // WebView에 JavaScript 코드 주입
+      // Inject JavaScript code into WebView
       webRef.current.injectJavaScript(`
         (function() {
           console.log('Setting up Vega OS remote control');
 
 
-          // Vega OS 리모컨 키 이벤트 핸들러 등록
+          // Register Vega OS remote key event handler
           document.addEventListener('keydown', function(event) {
             var keyCode = event.keyCode;
-            
+
             console.log('Key pressed:', keyCode);
-            
-            // 리모컨 키에 따른 동작 처리
+
+            // Handle actions based on remote key
             switch (keyCode) {
-              // ENTER 키 (키코드 13) - 전체화면 토글
+              // ENTER key (keycode 13) - Toggle fullscreen
               case 13:
                 document.getElementById('fullscreenBtn').addEventListener('click', function() {
-                  // 전체화면이 아닌 경우 전체화면으로 전환
+                  // Switch to fullscreen if not in fullscreen
                   if (!document.fullscreenElement) {
                     document.getElementById('player-container').requestFullscreen && document.getElementById('player-container').requestFullscreen();
                   } else {
-                    // 전체화면인 경우 전체화면 해제
+                    // Exit fullscreen if in fullscreen
                     document.exitFullscreen && document.exitFullscreen();
                   }
                 });
                 break;
 
 
-              // 좌측 방향키 (키코드 37) - 10초 되감기
+              // Left arrow key (keycode 37) - Rewind 10 seconds
               case 37:
                 console.log('Left - Rewind 10s');
                 controller.rw(10);
                 break;
 
-              // 상단 방향키 (키코드 38) - 볼륨 증가
+              // Up arrow key (keycode 38) - Volume up
               case 38:
                 console.log('Up - Volume up');
                 var volUp = controller.get_volume();
-                controller.set_volume(Math.min(volUp + 10, 100)); // 최대 100
+                controller.set_volume(Math.min(volUp + 10, 100)); // Max 100
                 break;
 
-              // 우측 방향키 (키코드 39) - 10초 빨리감기
+              // Right arrow key (keycode 39) - Fast forward 10 seconds
               case 39:
                 console.log('Right - Forward 10s');
                 controller.ff(10);
                 break;
 
-              // 하단 방향키 (키코드 40) - 볼륨 감소
+              // Down arrow key (keycode 40) - Volume down
               case 40:
                 console.log('Down - Volume down');
                 var volDown = controller.get_volume();
-                controller.set_volume(Math.max(volDown - 10, 0)); // 최소 0
+                controller.set_volume(Math.max(volDown - 10, 0)); // Min 0
                 break;
 
-              // PlayPause 버튼 (키코드 179) - 재생/일시정지 토글
+              // PlayPause button (keycode 179) - Toggle play/pause
               case 179:
                 console.log('PlayPause button');
                 if (status === 'play') {
@@ -92,52 +92,52 @@ export const App = () => {
                 }
                 break;
 
-              // Rewind 버튼 (키코드 227) - 30초 되감기
+              // Rewind button (keycode 227) - Rewind 30 seconds
               case 227:
                 console.log('Rewind button - 30s');
                 controller.rw(30);
                 break;
 
-              // Fast Forward 버튼 (키코드 228) - 30초 빨리감기
+              // Fast Forward button (keycode 228) - Fast forward 30 seconds
               case 228:
                 console.log('Fast Forward button - 30s');
                 controller.ff(30);
                 break;
 
-              // 알 수 없는 키
+              // Unknown key
               default:
                 console.log('Unknown key:', keyCode);
             }
 
-            // 이벤트 전파 방지 (브라우저 기본 동작 차단)
+            // Prevent event propagation (block browser default behavior)
             event.preventDefault();
             event.stopPropagation();
           }, true);
 
           console.log('Remote control ready');
         })();
-        true; // JavaScript 주입 성공 반환
+        true; // Return JavaScript injection success
       `);
     }
   };
 
-  // 스타일 정의
+  // Style definition
   const styles = StyleSheet.create({
-    container: { flex: 1 }, // 전체 화면 채우기
+    container: { flex: 1 }, // Fill entire screen
   });
 
-  // 컴포넌트 렌더링
+  // Component rendering
   return (
     <View style={styles.container}>
       <WebView
         ref={webRef}
-        hasTVPreferredFocus={true}              // TV에서 포커스 우선순위 설정
-        allowSystemKeyEvents={true}             // 시스템 키 이벤트 허용
-        source={{ uri: "https://web.as1as.net/jp/vega_test2.php" }} // Kollus Multi-DRM 테스트 페이지
-        javaScriptEnabled={true}                // JavaScript 실행 활성화
+        hasTVPreferredFocus={true}              // Set focus priority on TV
+        allowSystemKeyEvents={true}             // Allow system key events
+        source={{ uri: "https://web.as1as.net/jp/vega_test2.php" }} // Kollus Multi-DRM test page
+        javaScriptEnabled={true}                // Enable JavaScript execution
         onLoad={() => {
           console.log("WebView loaded");
-          setupRemoteControl();                 // 페이지 로드 후 리모컨 제어 설정
+          setupRemoteControl();                 // Setup remote control after page load
         }}
       />
     </View>
