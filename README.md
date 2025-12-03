@@ -37,6 +37,7 @@ KeplerProject/
 │   └── App.spec.tsx        # 테스트 파일
 ├── app.json                # 앱 메타데이터
 ├── package.json            # 프로젝트 의존성
+├── manifest.toml           # 앱 설정 파일
 ├── tsconfig.json           # TypeScript 설정
 └── jest.config.json        # 테스트 설정
 ```
