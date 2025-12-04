@@ -1,76 +1,351 @@
-# KeplerProject - Vega OS WebView with Kollus Multi-DRM Integration
+# Vega OS WebView App Development Guide
 
-A WebView-based media player sample application integrating Kollus Multi-DRM on the Vega OS platform.
+## Prerequisites
 
-## Project Overview
+### Refer to Official Vega OS Documentation
+- **Project Creation**: https://developer.amazon.com/docs/vega/get-started.html
+- **Build & Deploy**: https://developer.amazon.com/docs/vega/kepler-cli.html
+- **WebView API**: https://developer.amazon.com/docs/vega/develop-your-app-with-webview.html
 
-This is a TV application that plays DRM-protected content using WebView in the Amazon Vega OS environment. Built with React Native and leveraging the Kepler framework.
+---
 
-## Key Features
+## 1. manifest.toml Required Configuration
 
-- **WebView-based Content Playback**: Play media content protected by Kollus Multi-DRM
-- **TV Remote Control**: Control player using Vega OS remote's directional and media keys
-- **Fullscreen Support**: Toggle fullscreen with Enter key
-- **Media Controls**:
-  - Play/Pause (PlayPause button)
-  - Fast Forward/Rewind (Left/Right arrow keys, FF/REW buttons)
-  - Volume Control (Up/Down arrow keys)
+### DRM and Media Services (Required for Video Playback)
+```toml
+[wants]
+# WebView renderer
+[[wants.service]]
+id = "com.amazon.webview.renderer_service"
 
-## Tech Stack
+# Media playback
+[[wants.service]]
+id = "com.amazon.media.server"
+[[wants.service]]
+id = "com.amazon.mediametrics.service"
+[[wants.service]]
+id = "com.amazon.mediabuffer.service"
+[[wants.service]]
+id = "com.amazon.mediatransform.service"
 
-- **React Native**: 0.72.0
-- **React**: 18.2.0
-- **Amazon Kepler**: TV application framework
-- **Amazon WebView**: 3.3.x (WebView component for Vega OS)
-- **TypeScript**: 4.8.4
+# Audio
+[[wants.service]]
+id = "com.amazon.audio.stream"
+[[wants.service]]
+id = "com.amazon.audio.control"
 
-## Project Structure
+# DRM (Widevine/PlayReady)
+[[wants.service]]
+id = "com.amazon.drm.key"
+[[wants.service]]
+id = "com.amazon.drm.crypto"
 
+[[needs.privilege]]
+id = "com.amazon.privilege.security.file-sharing"
+
+# Group-IPC
+[[wants.service]]
+id = "com.amazon.gipc.uuid.*"
+
+[offers]
+[[offers.service]]
+id = "com.amazon.gipc.uuid.*"
 ```
-KeplerProject/
-├── src/
-│   ├── App.tsx              # Main application component
-│   ├── components/          # UI components
-│   │   └── Link.tsx
-│   └── assets/             # Images and resources
-├── test/
-│   └── App.spec.tsx        # Test files
-├── app.json                # App metadata
-├── package.json            # Project dependencies
-├── manifest.toml           # App Configuration
-├── tsconfig.json           # TypeScript configuration
-└── jest.config.json        # Test configuration
+
+---
+
+## 2. Basic WebView Implementation
+
+### src/App.tsx
+```typescript
+import { WebView } from "@amazon-devices/webview";
+import { useRef } from "react";
+import { StyleSheet, View } from "react-native";
+
+export const App = () => {
+  const webRef = useRef<any>(null);
+
+  const styles = StyleSheet.create({
+    container: { flex: 1 },
+  });
+
+  return (
+    <View style={styles.container}>
+      <WebView
+        ref={webRef}
+        hasTVPreferredFocus={true}
+        allowSystemKeyEvents={true}
+        source={{ uri: "https://your-website.com" }}
+        javaScriptEnabled={true}
+        onLoad={() => {
+          console.log("WebView loaded");
+        }}
+      />
+    </View>
+  );
+};
 ```
 
-## Installation and Running
+---
 
-### Prerequisites
+## 3. Remote Control Key Integration (Core)
 
-- Node.js
-- Amazon Kepler CLI
-- Vega OS development environment
+### 3.1 Vega OS Remote Key Codes
+```javascript
+const VEGA_KEY = {
+  ENTER: 13,
+  GO_BACK: 27,
+  ARROW_LEFT: 37,
+  ARROW_RIGHT: 39,
+  ARROW_DOWN: 40,
+  ARROW_UP: 38,
+  MEDIA_PLAY_PAUSE: 179,
+  MEDIA_REWIND: 227,
+  MEDIA_FAST_FORWARD: 228
+};
+```
 
-## Remote Control Key Mapping
+⚠️ **Note**: Volume/Mute keys are handled by the system and cannot be detected by the app
 
-| Key | Key Code | Function |
-|---|---|---|
-| Enter | 13 | Toggle fullscreen |
-| Left Arrow | 37 | Rewind 10 seconds |
-| Up Arrow | 38 | Volume +10 |
-| Right Arrow | 39 | Fast forward 10 seconds |
-| Down Arrow | 40 | Volume -10 |
-| PlayPause | 179 | Play/Pause toggle |
-| Rewind | 227 | Rewind 30 seconds |
-| Fast Forward | 228 | Fast forward 30 seconds |
+### 3.2 Key Event Handling via JavaScript Injection
+```typescript
+const setupRemoteControl = () => {
+  if (webRef.current) {
+    webRef.current.injectJavaScript(`
+      (function() {
+        // Register key event listener
+        document.addEventListener('keydown', function(event) {
+          var keyCode = event.keyCode;
+          
+          switch (keyCode) {
+            case 13: // ENTER
+              // Fullscreen toggle example
+              var iframe = document.getElementById('iframe');
+              if (iframe && !document.fullscreenElement) {
+                iframe.requestFullscreen?.();
+              } else {
+                document.exitFullscreen?.();
+              }
+              break;
+              
+            case 37: // LEFT: Rewind 10 seconds
+              controller?.rw(10);
+              break;
+              
+            case 39: // RIGHT: Forward 10 seconds
+              controller?.ff(10);
+              break;
+              
+            case 38: // UP: Volume up
+              var vol = controller?.get_volume();
+              controller?.set_volume(Math.min(vol + 10, 100));
+              break;
+              
+            case 40: // DOWN: Volume down
+              var vol = controller?.get_volume();
+              controller?.set_volume(Math.max(vol - 10, 0));
+              break;
+              
+            case 179: // PLAY_PAUSE
+              if (status === 'play') {
+                controller?.pause();
+                status = 'pause';
+              } else {
+                controller?.play();
+                status = 'play';
+              }
+              break;
+              
+            case 227: // REWIND: 30 seconds back
+              controller?.rw(30);
+              break;
+              
+            case 228: // FAST_FORWARD: 30 seconds forward
+              controller?.ff(30);
+              break;
+          }
+          
+          // Prevent default behavior
+          event.preventDefault();
+          event.stopPropagation();
+        }, true); // Capture phase
+        
+        console.log('✓ Remote control ready');
+      })();
+      true;
+    `);
+  }
+};
 
-## Main Dependencies
+// Use in WebView component
+<WebView
+  ref={webRef}
+  onLoad={() => {
+    setupRemoteControl();
+  }}
+/>
+```
 
-### Runtime Dependencies
-- `@amazon-devices/react-native-kepler`: Kepler platform integration
-- `@amazon-devices/webview`: Vega OS WebView component
-- `@amazon-devices/kepler-media-controls`: Media control API
-- `@amazon-devices/kepler-media-types`: Media type definitions
+### 3.3 Key Points
 
-## Target Platform
+1. **`injectJavaScript`**: Inject JavaScript code from React Native to WebView
+2. **Capture Phase**: `addEventListener(..., true)` - Capture events before the webpage's existing handlers
+3. **onLoad Callback**: Register key handler immediately after WebView loads
 
-- Vega OS TV
+---
+
+## 4. React Native ↔ WebView Communication
+
+### WebView → React Native
+
+**Sending message from WebView:**
+```javascript
+window.ReactNativeWebView.postMessage(JSON.stringify({
+  type: 'event',
+  data: { volume: 50 }
+}));
+```
+
+**Receiving in React Native:**
+```typescript
+<WebView
+  onMessage={(event) => {
+    const data = JSON.parse(event.nativeEvent.data);
+    console.log('Received:', data);
+  }}
+/>
+```
+
+### React Native → WebView
+```typescript
+webRef.current?.injectJavaScript(`
+  // JavaScript code to execute
+  console.log('Hello from React Native');
+  controller?.play();
+  true; // Must return true
+`);
+```
+
+---
+
+## 5. Troubleshooting
+
+### ❌ Remote Key Input Not Working
+
+**Symptom**: No response when pressing remote buttons
+
+**Cause and Solution:**
+
+**Webpage's existing key handlers intercept events**
+```javascript
+// Solution: Capture in capture phase
+document.addEventListener('keydown', handler, true);
+```
+
+💡 **Additional Tip**: If the webpage has `setInterval` code that forcibly moves focus, you may need to remove those timers.
+
+### ❌ DRM Content Playback Failure
+
+**Solution**: Add DRM services to manifest.toml (see Section 1 above)
+
+### ❌ Cannot Control Player Inside iframe
+
+**For cross-domain iframes:**
+```javascript
+// Use postMessage API
+iframe.contentWindow.postMessage({ action: 'play' }, '*');
+```
+
+---
+
+## 6. Complete Example Code
+```typescript
+import { WebView } from "@amazon-devices/webview";
+import { useRef } from "react";
+import { StyleSheet, View } from "react-native";
+
+export const App = () => {
+  const webRef = useRef<any>(null);
+
+  const setupRemoteControl = () => {
+    if (webRef.current) {
+      webRef.current.injectJavaScript(`
+        (function() {
+          // Key event listener
+          document.addEventListener('keydown', function(event) {
+            var keyCode = event.keyCode;
+            
+            switch (keyCode) {
+              case 13: // ENTER: Toggle fullscreen
+                var iframe = document.getElementById('iframe');
+                if (iframe && !document.fullscreenElement) {
+                  iframe.requestFullscreen?.();
+                } else {
+                  document.exitFullscreen?.();
+                }
+                break;
+              case 37: controller?.rw(10); break;
+              case 39: controller?.ff(10); break;
+              case 38:
+                var vol = controller?.get_volume();
+                controller?.set_volume(Math.min(vol + 10, 100));
+                break;
+              case 40:
+                var vol = controller?.get_volume();
+                controller?.set_volume(Math.max(vol - 10, 0));
+                break;
+              case 179:
+                if (status === 'play') {
+                  controller?.pause();
+                  status = 'pause';
+                } else {
+                  controller?.play();
+                  status = 'play';
+                }
+                break;
+              case 227: controller?.rw(30); break;
+              case 228: controller?.ff(30); break;
+            }
+            
+            event.preventDefault();
+            event.stopPropagation();
+          }, true);
+        })();
+        true;
+      `);
+    }
+  };
+
+  const styles = StyleSheet.create({
+    container: { flex: 1 },
+  });
+
+  return (
+    <View style={styles.container}>
+      <WebView
+        ref={webRef}
+        hasTVPreferredFocus={true}
+        allowSystemKeyEvents={true}
+        source={{ uri: "https://your-website.com" }}
+        javaScriptEnabled={true}
+        onLoad={() => {
+          setupRemoteControl();
+        }}
+      />
+    </View>
+  );
+};
+```
+
+---
+
+## References
+
+- [Getting Started with Vega OS](https://developer.amazon.com/docs/vega/get-started.html)
+- [WebView Development Guide](https://developer.amazon.com/docs/vega/develop-your-app-with-webview.html)
+- [Kepler CLI Reference](https://developer.amazon.com/docs/vega/kepler-cli.html)
+
+---
+
+**Created**: December 3, 2024  
+**Version**: 1.0
