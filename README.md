@@ -105,8 +105,6 @@ const VEGA_KEY = {
 };
 ```
 
-⚠️ **Note**: Volume/Mute keys are handled by the system and cannot be detected by the app
-
 ### 3.2 Key Event Handling via JavaScript Injection
 ```typescript
 const setupRemoteControl = () => {
