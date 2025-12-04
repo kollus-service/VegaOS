@@ -105,8 +105,6 @@ const VEGA_KEY = {
 };
 ```
 
-⚠️ **주의**: 볼륨/뮤트 키는 시스템이 직접 처리하여 앱에서 감지 불가
-
 ### 3.2 JavaScript 주입으로 키 이벤트 처리
 ```typescript
 const setupRemoteControl = () => {
